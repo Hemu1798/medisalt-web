@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123b32">
+<title>MediSalt – Pharmacy Assistant</title>
+<style>
+:root{--green:#123b32;--mint:#eaf4ef;--line:#dce5e0;--muted:#61716a;--red:#a63131}
+*{box-sizing:border-box}body{margin:0;background:#f5f7f6;color:#18231e;font-family:Arial,"Noto Sans Devanagari",sans-serif}
+header{background:var(--green);color:white;padding:18px 16px 16px;position:sticky;top:0;z-index:2}
+h1{font-size:23px;margin:0 0 5px}header p{margin:0;color:#d7e9e0;font-size:13px}
+main{max-width:760px;margin:auto;padding:14px 12px 34px}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+button,.tab{font:inherit;border:1px solid var(--line);border-radius:10px;padding:10px 8px;background:white;color:#20352c;cursor:pointer}
+.tab{font-size:13px;font-weight:700}.tab.active,button.primary{background:var(--green);color:white;border-color:var(--green)}
+button.small{padding:7px 9px;font-size:13px}button.danger{color:var(--red)}
+.panel,.card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:11px}
+h2{font-size:18px;margin:0 0 12px}h3{font-size:16px;margin:0 0 6px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 5px}
+input,textarea,select{width:100%;font:inherit;border:1px solid #cbd7d0;border-radius:9px;padding:11px;background:white;color:#18231e}
+textarea{min-height:76px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.muted{color:var(--muted);font-size:13px}.tag{display:inline-block;background:var(--mint);color:var(--green);padding:4px 7px;border-radius:7px;font-size:12px}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1;min-width:90px}
+.hidden{display:none!important}.empty{text-align:center;color:var(--muted);padding:24px 8px}
+.itemtop{display:flex;justify-content:space-between;gap:10px;align-items:start}.itemtop>div:first-child{min-width:0}
+hr{border:0;border-top:1px solid var(--line);margin:13px 0}
+footer{font-size:12px;color:var(--muted);text-align:center;padding:10px}
+@media(max-width:390px){.tab{font-size:11px;padding:9px 3px}.nav{gap:4px}.panel,.card{padding:11px}}
+</style>
+</head>
+<body>
+<header><h1>💊 MediSalt</h1><p>Hospital Pharmacy Assistant · Salt • Brand • Company • MR • Order Plan</p></header>
+<main>
+  <div class="nav">
+    <button class="tab active" data-tab="search">Brand / Salt</button>
+    <button class="tab" data-tab="companies">Company</button>
+    <button class="tab" data-tab="plans">Order Plans</button>
+    <button class="tab" data-tab="manage">Add / Edit</button>
+  </div>
+
+  <section id="search" class="view">
+    <div class="panel">
+      <h2>दवा खोजें</h2>
+      <input id="searchBox" placeholder="Brand, salt, strength या company खोजें…" autocomplete="off">
+      <p class="muted">एक brand चुनने पर उसी salt, strength और form के दर्ज किए गए alternate दिखेंगे।</p>
+    </div>
+    <div id="searchResults"></div>
+  </section>
+
+  <section id="companies" class="view hidden">
+    <div class="panel"><h2>Company Index</h2><input id="companySearch" placeholder="कंपनी या brand खोजें…"></div>
+    <div id="companyResults"></div>
+  </section>
+
+  <section id="plans" class="view hidden">
+    <div class="panel">
+      <h2>📋 Mam Discussion / Future Order Plans</h2>
+      <p class="muted">मैम से चर्चा के समय लिखें कि अगले ऑर्डर में किस brand की जगह क्या मंगाना है।</p>
+      <button class="primary" id="newPlanBtn">＋ नया चर्चा नोट</button>
+    </div>
+    <div id="planForm" class="panel hidden">
+      <h2 id="planFormTitle">नया नोट</h2>
+      <label>पुराना / मौजूदा brand</label><input id="planOld" placeholder="जैसे Dolo 650">
+      <label>अगले ऑर्डर में मंगाने वाला brand</label><input id="planNew" placeholder="जैसे Calpol 650">
+      <label>चर्चा / कारण / याद रखने वाली बात</label><textarea id="planNote" placeholder="मैम से क्या बात हुई?"></textarea>
+      <label>कब मंगाना है?</label><select id="planWhen"><option>Next order</option><option>Urgent</option><option>Later</option></select>
+      <label>अनुमानित तारीख (वैकल्पिक)</label><input id="planDate" type="date">
+      <div class="actions"><button class="primary" id="savePlan">नोट सेव करें</button><button id="cancelPlan">रद्द करें</button></div>
+    </div>
+    <div id="planResults"></div>
+    <button id="exportPlans">Order Plans कॉपी/Export करें</button>
+  </section>
+
+  <section id="manage" class="view hidden">
+    <div class="panel">
+      <h2 id="medicineFormTitle">अपनी दवा जोड़ें</h2>
+      <input id="medId" type="hidden">
+      <label>Brand name *</label><input id="medBrand" placeholder="ब्रांड नाम">
+      <label>Salt / Composition *</label><input id="medSalt" placeholder="Salt / composition">
+      <div class="row"><div><label>Strength *</label><input id="medStrength" placeholder="जैसे 650 mg"></div><div><label>Dosage form *</label><select id="medForm"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option><option>Cream / Ointment</option><option>Drops</option><option>Other</option></select></div></div>
+      <label>Company *</label><input id="medCompany" placeholder="कंपनी का नाम">
+      <label>Deal / खरीद स्कीम (वैकल्पिक)</label><input id="medDeal" placeholder="जैसे 10+1 — सत्यापित डील ही लिखें">
+      <label>MR का नाम</label><input id="medMr" placeholder="MR का नाम">
+      <label>MR फोन</label><input id="medPhone" type="tel" placeholder="फोन नंबर">
+      <label>नोट</label><textarea id="medNote" placeholder="वैकल्पिक नोट"></textarea>
+      <div class="actions"><button class="primary" id="saveMed">दवा सेव करें</button><button id="clearMed">फॉर्म साफ करें</button></div>
+      <p class="muted">* जरूरी जानकारी। एक जैसे salt, strength और form वाले ब्रांड ही alternate समूह में दिखेंगे।</p>
+    </div>
+    <div class="panel">
+      <h2>Company-wise Deals</h2>
+      <p class="muted">कंपनी की सामान्य स्कीम यहाँ एक बार दर्ज करें। उसकी दवाओं की खोज में यह डील दिखेगी, जब तक दवा की अलग brand deal दर्ज न हो।</p>
+      <label>Company name</label><input id="dealCompany" placeholder="कंपनी का नाम">
+      <label>Deal / scheme</label><input id="dealValue" placeholder="जैसे 10+4">
+      <div class="actions"><button class="primary" id="saveCompanyDeal">Company deal सेव करें</button></div>
+      <div id="companyDealList"></div>
+    </div>
+    <div class="panel">
+      <h2>डेटा बैकअप</h2>
+      <p class="muted">डेटा इस ब्राउज़र/डिवाइस पर सेव होता है। बैकअप नियमित रूप से डाउनलोड करें।</p>
+      <div class="actions"><button id="exportData">डेटा बैकअप डाउनलोड</button><button id="importDataBtn">बैकअप इम्पोर्ट</button></div>
+      <input id="importFile" type="file" accept=".json,application/json" class="hidden">
+      <button class="danger" id="resetDemo" style="margin-top:10px">डेमो डेटा हटाएँ</button>
+    </div>
+  </section>
+  <footer>डेमो डेटा उदाहरण के लिए है। Brand alternatives, composition, deals और substitution की clinical/dispensing पुष्टि करें।</footer>
+</main>
+<script>
+const KEY='medisalt_v1';
+const demo=[
+ {id:'d1',brand:'Dolo 650',salt:'Paracetamol',strength:'650 mg',form:'Tablet',company:'Micro Labs',deal:'',mr:'Demo MR',phone:'',note:'उदाहरण डेटा'},
+ {id:'d2',brand:'Calpol 650',salt:'Paracetamol',strength:'650 mg',form:'Tablet',company:'GSK',deal:'',mr:'Demo MR',phone:'',note:'उदाहरण डेटा'},
+ {id:'d3',brand:'Paracip 650',salt:'Paracetamol',strength:'650 mg',form:'Tablet',company:'Cipla',deal:'',mr:'Demo MR',phone:'',note:'उदाहरण डेटा'},
+ {id:'d4',brand:'Demo Brand X',salt:'Demo Salt B',strength:'10 mg',form:'Tablet',company:'Demo Pharma',deal:'',mr:'Sample MR',phone:'',note:'उदाहरण डेटा'}
+];
+let medicines=[],plans=[],companyDeals={},editingPlan=null;
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');medicines=s?.medicines||demo;plans=s?.plans||[];companyDeals=s?.companyDeals||{}}catch(e){medicines=demo;plans=[]}
+function persist(){localStorage.setItem(KEY,JSON.stringify({medicines,plans,companyDeals}))}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function sameGroup(a,b){return a.id!==b.id&&a.salt.trim().toLowerCase()===b.salt.trim().toLowerCase()&&a.strength.trim().toLowerCase()===b.strength.trim().toLowerCase()&&a.form.trim().toLowerCase()===b.form.trim().toLowerCase()}
+function medCard(m,showAlternates=true){
+ let alts=medicines.filter(x=>sameGroup(m,x));
+ let effectiveDeal=(m.deal||companyDeals[m.company.trim().toLowerCase()]||'');
+ let dealLabel=m.deal?'Brand deal':'Company deal';
+ return `<article class="card"><div class="itemtop"><div><h3>${esc(m.brand)}</h3><div class="muted">${esc(m.salt)} · ${esc(m.strength)} · ${esc(m.form)}</div><p>कंपनी: <b>${esc(m.company)}</b></p></div><span class="tag">${alts.length} alternate</span></div>
+ ${effectiveDeal?`<p><span class="tag">${dealLabel}</span> Deal: <b>${esc(effectiveDeal)}</b></p>`:'<p class="muted">Deal दर्ज नहीं है।</p>'}
+ <p class="muted">MR: ${esc(m.mr||'—')} ${m.phone?'· '+esc(m.phone):''}</p>
+ ${m.phone?`<div class="actions"><a href="tel:${esc(m.phone)}"><button>📞 MR को कॉल</button></a></div>`:''}
+ <div class="actions"><button class="primary small" onclick="startPlan('${m.id}')">Next Order Plan</button><button class="small" onclick="editMedicine('${m.id}')">Edit</button></div>
+ ${showAlternates&&alts.length?`<hr><h3>इस brand के alternates</h3>${alts.map(a=>`<div style="padding:9px 0;border-bottom:1px solid #edf1ee"><b>${esc(a.brand)}</b><div class="muted">${esc(a.company)} · ${esc(a.strength)} ${esc(a.form)}</div>${(a.deal||companyDeals[a.company.trim().toLowerCase()])?`<div class="muted">Deal: <b>${esc(a.deal||companyDeals[a.company.trim().toLowerCase()])}</b></div>`:''}<div class="muted">MR: ${esc(a.mr||'—')} ${a.phone?'· '+esc(a.phone):''}</div><div class="actions"><button class="small" onclick="startPlan('${m.id}','${a.id}')">इसे next order में लिखें</button></div></div>`).join('')}`:`<p class="muted">कोई दर्ज alternate नहीं मिला।</p>`}
+ </article>`
+}
+function renderCompanyDealList(){
+ const root=document.querySelector('#companyDealList');
+ const entries=Object.entries(companyDeals);
+ root.innerHTML=entries.length?entries.map(([company,deal])=>`<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #edf1ee"><div><b>${esc(company)}</b><div class="muted">Deal: ${esc(deal)}</div></div><button class="small danger" onclick="removeCompanyDeal('${company.replace(/'/g,"\\'")}')">हटाएँ</button></div>`).join(''):'<p class="muted">अभी कोई company-wise deal सेव नहीं है।</p>';
+}
+window.removeCompanyDeal=function(company){if(confirm('इस कंपनी की deal हटाएँ?')){delete companyDeals[company];persist();renderCompanyDealList();renderSearch();renderCompanies()}};
+document.querySelector('#saveCompanyDeal').onclick=()=>{
+ const company=document.querySelector('#dealCompany').value.trim();
+ const deal=document.querySelector('#dealValue').value.trim();
+ if(!company||!deal){alert('Company name और deal दोनों भरें।');return}
+ companyDeals[company.toLowerCase()]=deal;
+ persist();
+ document.querySelector('#dealCompany').value='';
+ document.querySelector('#dealValue').value='';
+ renderCompanyDealList();renderSearch();renderCompanies();
+ alert('Company-wise deal सेव हो गई।');
+};
+function renderSearch(){let q=document.querySelector('#searchBox').value.toLowerCase().trim();let arr=medicines.filter(m=>[m.brand,m.salt,m.strength,m.form,m.company,m.mr].join(' ').toLowerCase().includes(q));document.querySelector('#searchResults').innerHTML=arr.length?arr.map(m=>medCard(m,true)).join(''):'<div class="empty">कोई दवा नहीं मिली। Add / Edit में दवा जोड़ें।</div>'}
+function renderCompanies(){let q=document.querySelector('#companySearch').value.toLowerCase().trim();let arr=medicines.filter(m=>[m.company,m.brand,m.salt].join(' ').toLowerCase().includes(q));document.querySelector('#companyResults').innerHTML=arr.length?arr.map(m=>medCard(m,false)).join(''):'<div class="empty">कोई परिणाम नहीं।</div>'}
+function renderPlans(){let root=document.querySelector('#planResults');if(!plans.length){root.innerHTML='<div class="empty">अभी कोई order plan नहीं। Brand search से “Next Order Plan” दबाएँ या नया चर्चा नोट बनाएँ।</div>';return}
+ root.innerHTML=plans.map(p=>`<article class="card"><div class="itemtop"><div><h3>${esc(p.old||'—')} → ${esc(p.next||'—')}</h3><div class="muted">${esc(p.when||'Next order')}${p.date?' · '+esc(p.date):''}</div></div><span class="tag">${p.done?'Done':'Pending'}</span></div>${p.note?`<p>${esc(p.note)}</p>`:''}<div class="actions"><button class="small" onclick="editPlan('${p.id}')">Edit</button><button class="small primary" onclick="toggleDone('${p.id}')">${p.done?'फिर खोलें':'पूरा हुआ ✓'}</button><button class="small danger" onclick="deletePlan('${p.id}')">हटाएँ</button></div></article>`).join('')}
+function switchTab(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hidden',v.id!==id));document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='search')renderSearch();if(id==='companies')renderCompanies();if(id==='plans')renderPlans()}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.querySelector('#searchBox').addEventListener('input',renderSearch);document.querySelector('#companySearch').addEventListener('input',renderCompanies);
+function startPlan(oldId,newId){let old=medicines.find(m=>m.id===oldId),next=newId?medicines.find(m=>m.id===newId):null;editingPlan=null;document.querySelector('#planFormTitle').textContent='नया चर्चा नोट';document.querySelector('#planOld').value=old?.brand||'';document.querySelector('#planNew').value=next?.brand||'';document.querySelector('#planNote').value='';document.querySelector('#planWhen').value='Next order';document.querySelector('#planDate').value='';document.querySelector('#planForm').classList.remove('hidden');switchTab('plans');document.querySelector('#planForm').scrollIntoView({behavior:'smooth',block:'start'})}
+window.startPlan=startPlan;
+function editPlan(id){let p=plans.find(x=>x.id===id);if(!p)return;editingPlan=id;document.querySelector('#planFormTitle').textContent='चर्चा नोट संपादित करें';document.querySelector('#planOld').value=p.old;document.querySelector('#planNew').value=p.next;document.querySelector('#planNote').value=p.note||'';document.querySelector('#planWhen').value=p.when||'Next order';document.querySelector('#planDate').value=p.date||'';document.querySelector('#planForm').classList.remove('hidden');document.querySelector('#planForm').scrollIntoView({behavior:'smooth',block:'start'})}
+window.editPlan=editPlan;
+document.querySelector('#newPlanBtn').onclick=()=>startPlan('','');
+document.querySelector('#cancelPlan').onclick=()=>{document.querySelector('#planForm').classList.add('hidden');editingPlan=null};
+document.querySelector('#savePlan').onclick=()=>{let p={id:editingPlan||('p'+Date.now()),old:document.querySelector('#planOld').value.trim(),next:document.querySelector('#planNew').value.trim(),note:document.querySelector('#planNote').value.trim(),when:document.querySelector('#planWhen').value,date:document.querySelector('#planDate').value,done:false};if(!p.old||!p.next){alert('पुराना और नया brand भरें।');return}if(editingPlan){let old=plans.find(x=>x.id===editingPlan);p.done=old?.done||false;plans=plans.map(x=>x.id===editingPlan?p:x)}else plans.unshift(p);persist();document.querySelector('#planForm').classList.add('hidden');editingPlan=null;renderPlans()};
+function toggleDone(id){plans=plans.map(p=>p.id===id?{...p,done:!p.done}:p);persist();renderPlans()}window.toggleDone=toggleDone;
+function deletePlan(id){if(confirm('यह plan हटाएँ?')){plans=plans.filter(p=>p.id!==id);persist();renderPlans()}}window.deletePlan=deletePlan;
+function clearMedForm(){['medId','medBrand','medSalt','medStrength','medCompany','medDeal','medMr','medPhone','medNote'].forEach(id=>document.getElementById(id).value='');document.querySelector('#medFormTitle').textContent='अपनी दवा जोड़ें'}
+document.querySelector('#clearMed').onclick=clearMedForm;
+window.editMedicine=function(id){let m=medicines.find(x=>x.id===id);if(!m)return;switchTab('manage');document.querySelector('#medId').value=m.id;document.querySelector('#medBrand').value=m.brand;document.querySelector('#medSalt').value=m.salt;document.querySelector('#medStrength').value=m.strength;document.querySelector('#medForm').value=m.form;document.querySelector('#medCompany').value=m.company;document.querySelector('#medDeal').value=m.deal||'';document.querySelector('#medMr').value=m.mr||'';document.querySelector('#medPhone').value=m.phone||'';document.querySelector('#medNote').value=m.note||'';document.querySelector('#medicineFormTitle').textContent='दवा संपादित करें';window.scrollTo(0,0)};
+document.querySelector('#saveMed').onclick=()=>{let id=document.querySelector('#medId').value||('m'+Date.now());let m={id,brand:document.querySelector('#medBrand').value.trim(),salt:document.querySelector('#medSalt').value.trim(),strength:document.querySelector('#medStrength').value.trim(),form:document.querySelector('#medForm').value,company:document.querySelector('#medCompany').value.trim(),deal:document.querySelector('#medDeal').value.trim(),mr:document.querySelector('#medMr').value.trim(),phone:document.querySelector('#medPhone').value.trim(),note:document.querySelector('#medNote').value.trim()};if(!m.brand||!m.salt||!m.strength||!m.company){alert('Brand, salt, strength और company भरें।');return}if(medicines.some(x=>x.id===id))medicines=medicines.map(x=>x.id===id?m:x);else medicines.unshift(m);persist();clearMedForm();alert('दवा सेव हो गई।');switchTab('search')};
+function download(name,content,type='application/json'){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+document.querySelector('#exportData').onclick=()=>download('medisalt-backup.json',JSON.stringify({medicines,plans,companyDeals},null,2));
+document.querySelector('#importDataBtn').onclick=()=>document.querySelector('#importFile').click();
+document.querySelector('#importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.medicines)||!Array.isArray(d.plans))throw Error();if(confirm('मौजूदा डेटा को इस बैकअप से बदलें?')){medicines=d.medicines;plans=d.plans;companyDeals=d.companyDeals||{};persist();renderSearch();renderCompanies();renderPlans();renderCompanyDealList();alert('बैकअप इम्पोर्ट हो गया।')}}catch(err){alert('यह सही MediSalt backup JSON नहीं है।')}e.target.value=''};
+document.querySelector('#exportPlans').onclick=()=>download('medisalt-order-plans.txt',plans.map(p=>`${p.done?'DONE':'PENDING'} | ${p.old} -> ${p.next} | ${p.when} | ${p.date||''} | ${p.note||''}`).join('\n'),'text/plain');
+document.querySelector('#resetDemo').onclick=()=>{if(confirm('सभी दवाएँ और order plans हटाकर demo data वापस लाएँ? पहले backup डाउनलोड कर लें।')){medicines=demo.map(x=>({...x}));plans=[];persist();renderSearch();renderCompanies();renderPlans();alert('डेमो डेटा रीसेट हो गया।')}};
+renderSearch();renderCompanies();renderPlans();renderCompanyDealList();
+</script>
+</body></html>
